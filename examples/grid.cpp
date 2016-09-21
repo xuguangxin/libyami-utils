@@ -88,7 +88,7 @@ bool checkDrmRet(int ret,const char* msg)
 class DrmFrame : public VideoFrame
 {
 public:
-    DrmFrame(VADisplay, int fd, uint32_t width, uint32_t height);
+    DrmFrame(VADisplay, int fd, uint32_t width, uint32_t height, bool tenBits = false);
     ~DrmFrame();
     bool init();
     uint32_t getFbHandle();
@@ -107,16 +107,23 @@ private:
     uint32_t m_bo;
     uint32_t m_handle;
     uint32_t m_pitch;
+    bool m_10bits;
     static const uint32_t BPP = 32;
 };
 
-DrmFrame::DrmFrame(VADisplay display, int fd, uint32_t width, uint32_t height)
-    :m_display(display), m_fd(fd), m_width(width),m_height(height),m_bo(-1), m_handle(-1)
+DrmFrame::DrmFrame(VADisplay display, int fd, uint32_t width, uint32_t height, bool tenBits)
+    : m_display(display)
+    , m_fd(fd)
+    , m_width(width)
+    , m_height(height)
+    , m_bo(-1)
+    , m_handle(-1)
+    , m_10bits(tenBits)
 {
     //dirty but handy
     VideoFrame* frame = static_cast<VideoFrame*>(this);
     memset(frame, 0, sizeof(VideoFrame));
-    frame->fourcc = YAMI_FOURCC_RGBX;
+    frame->fourcc = tenBits ? YAMI_FOURCC_R210 : YAMI_FOURCC_RGBX;
     frame->surface = static_cast<intptr_t>(VA_INVALID_ID);
 }
 
@@ -137,7 +144,8 @@ bool DrmFrame::createBo()
 
 bool DrmFrame::addToFb()
 {
-    int ret = drmModeAddFB(m_fd, m_width, m_height, 24,
+    uint8_t depth = m_10bits ? 30 : 24;
+    int ret = drmModeAddFB(m_fd, m_width, m_height, depth,
             BPP, m_pitch, m_bo, &m_handle);
     return checkDrmRet(ret, "drmModeAddFB");
 }
@@ -158,7 +166,7 @@ bool DrmFrame::bindToVaSurface()
     VASurfaceAttribExternalBuffers external;
     unsigned long handle = (unsigned long)arg.name;
     memset(&external, 0, sizeof(external));
-    external.pixel_format = VA_FOURCC_BGRX;
+    external.pixel_format = fourcc;
     external.width = m_width;
     external.height = m_height;
     external.data_size = m_width * m_height * BPP / 8;
@@ -179,7 +187,8 @@ bool DrmFrame::bindToVaSurface()
     attribs[1].value.value.p = &external;
 
     VASurfaceID id;
-    VAStatus vaStatus = vaCreateSurfaces(m_display, VA_RT_FORMAT_RGB32, m_width, m_height,
+    uint32_t rtFormat = m_10bits ? VA_RT_FORMAT_R210 : VA_RT_FORMAT_RGB32;
+    VAStatus vaStatus = vaCreateSurfaces(m_display, rtFormat, m_width, m_height,
                                            &id, 1,attribs, N_ELEMENTS(attribs));
     if (!checkVaapiStatus(vaStatus, "vaCreateSurfaces"))
         return false;
@@ -334,7 +343,7 @@ public:
     uint32_t getWidth();
     uint32_t getHeight();
 
-    DrmRenderer(VADisplay, int fd, int displayIdx, int fps);
+    DrmRenderer(VADisplay, int fd, int displayIdx, int fps, bool tenBits);
     ~DrmRenderer();
 private:
     bool createFrames(uint32_t width, uint32_t height, int size);
@@ -363,6 +372,7 @@ private:
     SharedPtr<Flipper>    m_flipper;
     int m_frameCount;
     int m_fps;
+    bool m_10bits;
 };
 
 DrmRenderer::Flipper::Flipper(DrmRenderer* r)
@@ -711,20 +721,21 @@ void FlipNotifier::loop()
     }
 }
 
-DrmRenderer::DrmRenderer(VADisplay display, int fd, int displayIdx, int fps)
+DrmRenderer::DrmRenderer(VADisplay display, int fd, int displayIdx, int fps, bool tenBits)
     : m_display(display)
     , m_fd(fd)
     , m_displayIdx(displayIdx)
     , m_cond(m_lock)
     , m_frameCount(0)
     , m_fps(fps)
+    , m_10bits(tenBits)
 {
 }
 
 bool DrmRenderer::createFrames(uint32_t width, uint32_t height, int size)
 {
     for (int i = 0; i < size; i++) {
-        SharedPtr<DrmFrame> frame(new DrmFrame(m_display, m_fd, width, height));
+        SharedPtr<DrmFrame> frame(new DrmFrame(m_display, m_fd, width, height, m_10bits));
         if (!frame->init())
             return false;
         m_backs.push_back(frame);
@@ -793,12 +804,13 @@ bool DrmRenderer::getPlane()
     if (!planes) {
         return false;
     }
+    uint32_t target = m_10bits ? DRM_FORMAT_XRGB2101010 : DRM_FORMAT_XRGB8888;
     for (uint32_t i = 0; i < planes->count_planes; i++) {
         drmModePlanePtr plane = drmModeGetPlane(m_fd, planes->planes[i]);
         if (plane) {
             if (plane->possible_crtcs & (1 << m_crtcIndex)) {
                 for (uint32_t j = 0; j < plane->count_formats; j++) {
-                    if (plane->formats[j] == DRM_FORMAT_XRGB8888) {
+                    if (plane->formats[j] == target) {
                         m_planeID = plane->plane_id;
                         drmModeFreePlane(plane);
                         drmModeFreePlaneResources(planes);
@@ -932,6 +944,8 @@ void usage(const char* app) {
         printf("       example: grid a.mp4 -g \"b.mp4 -d 2\"\n");
         printf("       it will render a.mp4 in first display and b.mp4 in second\n");
         printf("   -f, <frame rate> you can force video sync to this frame rate \n");
+        printf("   -t create 10 bits RGB output, you need 10 bits display for this\n");
+
 }
 
 class Grid
@@ -1001,6 +1015,7 @@ public:
         , m_singleThread(false)
         , m_vppThread(-1)
         , m_fps(0)
+        , m_10bits(false)
     {
     }
 
@@ -1055,7 +1070,7 @@ private:
             return false;
         }
 
-        SharedPtr<DrmRenderer> tmp(new DrmRenderer(m_vaDisplay, m_fd, m_displayIdx, m_fps));
+        SharedPtr<DrmRenderer> tmp(new DrmRenderer(m_vaDisplay, m_fd, m_displayIdx, m_fps, m_10bits));
         if (!tmp->init()) {
             ERROR("init drm renderer failed");
             return false;
@@ -1110,7 +1125,7 @@ DONE:
     {
         char opt;
         optind = 0;
-        while ((opt = getopt(argc, argv, "c:r:d:f:s")) != -1) {
+        while ((opt = getopt(argc, argv, "c:r:d:f:st")) != -1) {
             switch (opt) {
                 case 'c':
                     m_col = atoi(optarg);
@@ -1127,6 +1142,8 @@ DONE:
                 case 'f':
                     m_fps = atoi(optarg);
                     break;
+                case 't':
+                    m_10bits = true;
                 default:
                     return false;
             }
@@ -1162,6 +1179,7 @@ DONE:
     pthread_t m_vppThread;
     Arg m_arg;
     int m_fps;
+    bool m_10bits;
 };
 
 class App
