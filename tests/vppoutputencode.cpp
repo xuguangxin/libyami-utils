@@ -120,7 +120,8 @@ static void setEncodeParam(const SharedPtr<IVideoEncoder>& encoder,
     else
         encVideoParams.bitDepth = 8;
 
-    memcpy(encVideoParams.rcParams.layerBitRate, encParam->layerBitRate,
+    encVideoParams.temporalLayers.numLayers = encParam->temporalLayerNum;
+    memcpy(encVideoParams.temporalLayers.bitRate, encParam->layerBitRate,
            sizeof(encParam->layerBitRate));
     encVideoParams.size = sizeof(VideoParamsCommon);
     encoder->setParameters(VideoParamsTypeCommon, &encVideoParams);
@@ -165,7 +166,6 @@ static void setEncodeParam(const SharedPtr<IVideoEncoder>& encoder,
               "0.2.1", "or enableCabac, enableDct8x8 and enableDeblockFilter "
                        "will use the default value");
 #endif
-        encVideoParamsAVC.temporalLayerNum = encParam->temporalLayerNum;
         encVideoParamsAVC.priorityId = encParam->priorityId;
 
         encoder->setParameters(VideoParamsTypeAVC, &encVideoParamsAVC);

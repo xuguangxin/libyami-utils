@@ -226,16 +226,16 @@ static bool processCmdLine(int argc, char *argv[], TranscodeParams& para)
                     para.oHeight = atoi(optarg);
                     break;
                 case 18:
-                    para.m_encParams.layerBitRate[0] = atoi(optarg) * 1024;//kbps to bps;
+                    para.m_encParams.bitRate = atoi(optarg) * 1024;//kbps to bps;
                     break;
                 case 19:
-                    para.m_encParams.layerBitRate[1] = atoi(optarg) * 1024;//kbps to bps;
+                    para.m_encParams.layerBitRate[0] = atoi(optarg) * 1024;//kbps to bps;
                     break;
                 case 20:
-                    para.m_encParams.layerBitRate[2] = atoi(optarg) * 1024;//kbps to bps;
+                    para.m_encParams.layerBitRate[1] = atoi(optarg) * 1024;//kbps to bps;
                     break;
                 case 21:
-                    para.m_encParams.layerBitRate[3] = atoi(optarg) * 1024;//kbps to bps;
+                    para.m_encParams.layerBitRate[2] = atoi(optarg) * 1024;//kbps to bps;
                     break;
                 case 22:
                     para.m_encParams.enableLowPower = true;
