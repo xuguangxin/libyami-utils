@@ -120,9 +120,17 @@ static void setEncodeParam(const SharedPtr<IVideoEncoder>& encoder,
     else
         encVideoParams.bitDepth = 8;
 
-    encVideoParams.temporalLayers.numLayers = encParam->temporalLayerNum;
-    memcpy(encVideoParams.temporalLayers.bitRate, encParam->layerBitRate,
-           sizeof(encParam->layerBitRate));
+    if (VA_RC_CQP == encVideoParams.rcMode) //for CQP mode
+        encVideoParams.temporalLayers.length = encParam->temporalLayerNum - 1;
+    else { //for CBR or VBR mode
+        uint32_t i = 0;
+        for (i = 0; i < SVCT_RATE_BUFFER_LENGTH; i++) {
+            if (!encParam->layerBitRate[i])
+                break;
+            encVideoParams.temporalLayers.bitRate[i] = encParam->layerBitRate[i];
+        }
+        encVideoParams.temporalLayers.length = i;
+    }
     encVideoParams.size = sizeof(VideoParamsCommon);
     encoder->setParameters(VideoParamsTypeCommon, &encVideoParams);
 
