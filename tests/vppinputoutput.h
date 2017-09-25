@@ -165,7 +165,8 @@ private:
     SharedPtr<VaapiFrameIO> m_frameio;
     static bool writeToFile(char* ptr, int size, FILE* fp)
     {
-        return fwrite(ptr, 1, size, fp) == (size_t)size;
+        return true;
+//        return fwrite(ptr, 1, size, fp) == (size_t)size;
     }
 };
 //vaapi related operation end

@@ -432,6 +432,7 @@ public:
             fps.addFrame();
             if(count >= m_cmdParam.frameCount)
                 break;
+            m_input = createInput(m_cmdParam, m_display);
         }
         src.reset();
         m_output->output(src);
