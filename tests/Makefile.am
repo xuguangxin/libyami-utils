@@ -94,8 +94,8 @@ YAMI_VPP_CFLAGS = \
 	$(NULL)
 
 yamidecode_LDADD    = $(YAMI_VPP_LIBS)
-yamidecode_LDFLAGS  = $(YAMI_VPP_LDFLAGS)
-yamidecode_SOURCES  = decode.cpp decodehelp.cpp $(DECODE_INPUT_SOURCES) decodeoutput.cpp vppinputoutput.cpp vppinputdecode.cpp vppoutputencode.cpp encodeinput.cpp encodeInputCamera.cpp encodeInputDecoder.cpp vppinputdecodecapi.cpp
+yamidecode_LDFLAGS  = $(YAMI_VPP_LDFLAGS)  -pthread
+yamidecode_SOURCES  = decode.cpp decodehelp.cpp $(DECODE_INPUT_SOURCES) decodeoutput.cpp vppinputoutput.cpp vppinputdecode.cpp vppoutputencode.cpp encodeinput.cpp encodeInputCamera.cpp encodeInputDecoder.cpp vppinputdecodecapi.cpp vppinputasync.cpp
 if ENABLE_TESTS_GLES
 yamidecode_SOURCES += ../egl/egl_util.c ./egl/gles2_help.c
 endif

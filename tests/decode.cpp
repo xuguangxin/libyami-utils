@@ -21,7 +21,7 @@
 #include "vppinputdecode.h"
 #include "decodeoutput.h"
 #include "decodehelp.h"
-
+#include "vppinputasync.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -73,6 +73,7 @@ public:
             fprintf(stderr, "DecodeTest init failed.\n");
             return false;
         }
+        m_vppInput = VppInputAsync::create(m_vppInput, 3); //make input in other thread.
         return true;
     }
     bool run()
