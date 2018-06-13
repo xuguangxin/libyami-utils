@@ -30,7 +30,10 @@ bool VppInputDecode::init(const char* inputFileName, uint32_t /*fourcc*/, int /*
 
 bool VppInputDecode::config(NativeDisplay& nativeDisplay)
 {
+
     m_decoder->setNativeDisplay(&nativeDisplay);
+    m_allocator.reset(new DecoderSurfaceAllocator(nativeDisplay));
+    m_decoder->setAllocator(m_allocator.get());
 
     VideoConfigBuffer configBuffer;
     memset(&configBuffer, 0, sizeof(configBuffer));
@@ -63,8 +66,10 @@ bool VppInputDecode::read(SharedPtr<VideoFrame>& frame)
 
     while (1)  {
         frame = m_decoder->getOutput();
-        if (frame)
+        if (frame) {
+            m_allocator->checkOutput(frame->surface);
             return true;
+        }
         if (m_error || m_eos)
             return false;
         VideoDecodeBuffer inputBuffer;

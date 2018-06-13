@@ -19,6 +19,7 @@
 #include "decodeinput.h"
 
 #include "vppinputoutput.h"
+#include "DecoderSurfaceAllocator.h"
 
 class VppInputDecode : public VppInput
 {
@@ -47,6 +48,7 @@ public:
 private:
     bool m_eos;
     bool m_error;
+    SharedPtr<DecoderSurfaceAllocator> m_allocator;
     SharedPtr<IVideoDecoder> m_decoder;
     SharedPtr<DecodeInput>   m_input;
     SharedPtr<VideoFrame>    m_first;
