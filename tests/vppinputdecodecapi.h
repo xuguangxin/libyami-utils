@@ -26,6 +26,7 @@ public:
     VppInputDecodeCapi()
         : m_eos(false)
         , m_error(false)
+        , m_allocator(NULL)
     {
     }
     ~VppInputDecodeCapi();
@@ -39,6 +40,7 @@ private:
     bool m_eos;
     bool m_error;
     DecodeHandler m_decoder;
+    SurfaceAllocator* m_allocator;
     SharedPtr<DecodeInput> m_input;
 };
 

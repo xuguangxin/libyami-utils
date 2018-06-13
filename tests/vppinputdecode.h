@@ -26,6 +26,7 @@ public:
     VppInputDecode()
         : m_eos(false)
         , m_error(false)
+        , m_allocator(NULL)
     {
     }
     bool init(const char* inputFileName, uint32_t fourcc = 0, int width = 0, int height = 0);
@@ -48,6 +49,7 @@ private:
     bool m_eos;
     bool m_error;
     SharedPtr<IVideoDecoder> m_decoder;
+    SurfaceAllocator* m_allocator;
     SharedPtr<DecodeInput>   m_input;
     SharedPtr<VideoFrame>    m_first;
     //m_xxxLayer layer number, 0: decode all layers, >0: decode up to target layer.

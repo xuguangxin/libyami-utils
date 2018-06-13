@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 #include "tests/vppinputdecode.h"
+#include "DecoderSurfaceAllocator.h"
 
 bool VppInputDecode::init(const char* inputFileName, uint32_t /*fourcc*/, int /*width*/, int /*height*/)
 {
@@ -30,7 +31,11 @@ bool VppInputDecode::init(const char* inputFileName, uint32_t /*fourcc*/, int /*
 
 bool VppInputDecode::config(NativeDisplay& nativeDisplay)
 {
+
     m_decoder->setNativeDisplay(&nativeDisplay);
+    m_allocator = createDecoderSurfaceAllocator(&nativeDisplay);
+    if (m_allocator)
+        m_decoder->setAllocator(m_allocator);
 
     VideoConfigBuffer configBuffer;
     memset(&configBuffer, 0, sizeof(configBuffer));
@@ -63,8 +68,11 @@ bool VppInputDecode::read(SharedPtr<VideoFrame>& frame)
 
     while (1)  {
         frame = m_decoder->getOutput();
-        if (frame)
+        if (frame) {
+            if (m_allocator)
+                checkDecoderOutput(m_allocator, frame->surface);
             return true;
+        }
         if (m_error || m_eos)
             return false;
         VideoDecodeBuffer inputBuffer;

@@ -95,7 +95,7 @@ YAMI_VPP_CFLAGS = \
 
 yamidecode_LDADD    = $(YAMI_VPP_LIBS)
 yamidecode_LDFLAGS  = $(YAMI_VPP_LDFLAGS)
-yamidecode_SOURCES  = decode.cpp decodehelp.cpp $(DECODE_INPUT_SOURCES) decodeoutput.cpp vppinputoutput.cpp vppinputdecode.cpp vppoutputencode.cpp encodeinput.cpp encodeInputCamera.cpp encodeInputDecoder.cpp vppinputdecodecapi.cpp md5.c
+yamidecode_SOURCES  = decode.cpp decodehelp.cpp $(DECODE_INPUT_SOURCES) decodeoutput.cpp vppinputoutput.cpp DecoderSurfaceAllocator.cpp vppinputdecode.cpp vppoutputencode.cpp encodeinput.cpp encodeInputCamera.cpp encodeInputDecoder.cpp vppinputdecodecapi.cpp md5.c
 if ENABLE_EGL
 yamidecode_SOURCES += ../egl/egl_util.c ./egl/gles2_help.c
 endif
@@ -120,11 +120,11 @@ v4l2encode_SOURCES = v4l2encode.cpp encodeinput.h encodeinput.cpp encodeInputCam
 
 yamivpp_LDADD    = $(YAMI_VPP_LIBS)
 yamivpp_LDFLAGS  = $(YAMI_VPP_LDFLAGS)
-yamivpp_SOURCES  = vppinputdecode.cpp vppinputoutput.cpp vppoutputencode.cpp  vpp.cpp encodeinput.cpp encodeInputCamera.cpp encodeInputDecoder.cpp $(DECODE_INPUT_SOURCES) vppinputdecodecapi.cpp
+yamivpp_SOURCES  = vppinputdecode.cpp vppinputoutput.cpp DecoderSurfaceAllocator.cpp vppoutputencode.cpp  vpp.cpp encodeinput.cpp encodeInputCamera.cpp encodeInputDecoder.cpp $(DECODE_INPUT_SOURCES) vppinputdecodecapi.cpp
 
 yamitranscode_LDADD    = $(YAMI_VPP_LIBS)
 yamitranscode_LDFLAGS  = -pthread $(YAMI_VPP_LDFLAGS)
-yamitranscode_SOURCES  = vppinputdecode.cpp vppinputoutput.cpp vppoutputencode.cpp  yamitranscode.cpp encodeinput.cpp encodeInputCamera.cpp encodeInputDecoder.cpp $(DECODE_INPUT_SOURCES) vppinputasync.cpp vppinputdecodecapi.cpp 
+yamitranscode_SOURCES  = vppinputdecode.cpp vppinputoutput.cpp DecoderSurfaceAllocator.cpp vppoutputencode.cpp  yamitranscode.cpp encodeinput.cpp encodeInputCamera.cpp encodeInputDecoder.cpp $(DECODE_INPUT_SOURCES) vppinputasync.cpp vppinputdecodecapi.cpp
 
 bin_PROGRAMS += yamiinfo
 yamiinfo_SOURCES = yamiinfo.cpp

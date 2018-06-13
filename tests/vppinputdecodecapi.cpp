@@ -19,6 +19,7 @@
 #endif
 
 #include "vppinputdecodecapi.h"
+#include "DecoderSurfaceAllocator.h"
 
 static void freeFrame(VideoFrame* frame)
 {
@@ -47,6 +48,9 @@ bool VppInputDecodeCapi::init(const char* inputFileName, uint32_t /*fourcc*/, in
 bool VppInputDecodeCapi::config(NativeDisplay& nativeDisplay)
 {
     decodeSetNativeDisplay(m_decoder, &nativeDisplay);
+    m_allocator = createDecoderSurfaceAllocator(&nativeDisplay);
+    if (m_allocator)
+        decodeSetAllocator(m_decoder, m_allocator);
 
     VideoConfigBuffer configBuffer;
     memset(&configBuffer, 0, sizeof(configBuffer));
